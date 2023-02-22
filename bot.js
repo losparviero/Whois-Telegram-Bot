@@ -1,65 +1,56 @@
-require('dotenv').config();
-const { Bot, session, GrammyError, HttpError } = require("grammy");
-const { run, sequentialize } = require("@grammyjs/runner");
-const whois = require('whois');
+require("dotenv").config();
+const { Bot } = require("grammy");
+const whois = require("whois");
 
 // Bot
 
 const bot = new Bot(process.env.BOT_TOKEN);
 
-// Concurrency
-
-function getSessionKey(ctx) {
-  return ctx.chat?.id.toString(); }
-
-bot.use(sequentialize(getSessionKey));
-bot.use(session({ getSessionKey })); 
-
 // Commands
 
-bot.command("start", async (ctx) => ctx.reply("*Welcome!* ✨ Send a website to get WHOIS details.", { parse_mode: "Markdown" }) );
-bot.command("help", (ctx) => ctx.reply("*@anzubo Project.*\n\nThis bot uses the whois lib to get WHOIS domain information data.\n_Note that names or details of registrant may be privacy protected and hence not available._", { parse_mode: "Markdown" } ));
+bot.command("start", async (ctx) => {
+  await ctx
+    .reply("*Welcome!* ✨ Send a website to get WHOIS details.", {
+      parse_mode: "Markdown",
+    })
+    .then(console.log("New user added:\n", ctx.from))
+    .catch((e) => console.error(e));
+});
+
+bot.command("help", async (ctx) => {
+  await ctx
+    .reply(
+      "*@anzubo Project.*\n\nThis bot uses the whois lib to get WHOIS domain information data.\n_Note that names or details of registrant may be privacy protected and hence not available._",
+      { parse_mode: "Markdown" }
+    )
+    .then(console.log("Help command sent to", ctx.from.id))
+    .catch((e) => console.error(e));
+});
 
 // Messages
 
-bot
-  .on("msg", async (ctx) => {
-
-    // Logging
-
-    if (ctx.from.last_name === undefined) { console.log('from:', ctx.from.first_name, '(@' + ctx.from.username + ')', 'ID:', ctx.from.id); }
-    else { console.log('from:', ctx.from.first_name, ctx.from.last_name, '(@' + ctx.from.username + ')', 'ID:', ctx.from.id); }
-    console.log("Message:", ctx.msg.text);
-
-    // Logic
-
-    whois.lookup(ctx.msg.text, function(err, data) {
-        if (err) {
-            ctx.reply("An error occurred.");
-            console.log(err);
-            return; }
-        ctx.reply("*Domain Information*" + "\n\n" + data, { parse_mode: "Markdown" }); });
-
-  });
-
-// Error Handling
-
-bot.catch((err) => {
-  const ctx = err.ctx;
-  console.error("Error while handling update", ctx.update.update_id, "\nQuery:", ctx.msg.text, "not found");
-  if (ctx.config.isDeveloper) { ctx.reply("Query: " + ctx.msg.text + " " + "not found!"); }
-  else { bot.api.sendMessage(ctx.config.botDeveloper, "Query: " + ctx.msg.text + " by @" + ctx.from.username + " ID: " + ctx.from.id + " not found!"); }
-  const e = err.error;
-  if (e instanceof GrammyError) {
-    console.error("Error in request:", e.description);
-  } else if (e instanceof HttpError) {
-    console.error("Could not contact Telegram:", e);
-  } else {
-    console.error("Unknown error:", e);
+bot.on("msg", async (ctx) => {
+  console.log("Query:", ctx.msg.text, "from", ctx.msg.id);
+  try {
+    await whois.lookup(ctx.msg.text, async function (err, data) {
+      if (err) {
+        await ctx.reply("*Error fetching details. Send a valid website URL.*", {
+          parse_mode: "Markdown",
+          reply_to_message_id: ctx.msg.message_id,
+        });
+        console.log(err);
+        return;
+      }
+      await ctx.reply("*Domain Information*" + "\n\n" + data, {
+        parse_mode: "Markdown",
+      });
+    });
+  } catch (error) {
+    console.error(error);
+    await ctx.reply("An error occured");
   }
 });
 
 // Run
 
-console.log('Bot running. Please keep this window open or use a startup manager like PM2 to setup persistent execution and store logs.');
-run(bot);
+bot.start();
