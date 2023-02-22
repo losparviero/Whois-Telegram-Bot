@@ -6,6 +6,11 @@ const whois = require("whois");
 
 const bot = new Bot(process.env.BOT_TOKEN);
 
+// DB
+
+const mysql = require("mysql2");
+const connection = mysql.createConnection(process.env.DATABASE_URL);
+
 // Commands
 
 bot.command("start", async (ctx) => {
@@ -13,8 +18,38 @@ bot.command("start", async (ctx) => {
     .reply("*Welcome!* ✨ Send a website to get WHOIS details.", {
       parse_mode: "Markdown",
     })
-    .then(console.log("New user added:\n", ctx.from))
-    .catch((e) => console.error(e));
+    .then(() => {
+      connection.query(
+        `
+SELECT * FROM users WHERE userid = ?
+`,
+        [ctx.from.id],
+        (error, results) => {
+          if (error) throw error;
+          if (results.length === 0) {
+            connection.query(
+              `
+    INSERT INTO users (userid, username, firstName, lastName, firstSeen)
+    VALUES (?, ?, ?, ?, NOW())
+  `,
+              [
+                ctx.from.id,
+                ctx.from.username,
+                ctx.from.first_name,
+                ctx.from.last_name,
+              ],
+              (error, results) => {
+                if (error) throw error;
+                console.log("New user added:", ctx.from);
+              }
+            );
+          } else {
+            console.log("User exists in database.", ctx.from);
+          }
+        }
+      );
+    })
+    .catch((error) => console.error(error));
 });
 
 bot.command("help", async (ctx) => {

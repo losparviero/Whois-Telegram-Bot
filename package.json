@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "@grammyjs/runner": "^1.0.4",
     "dotenv": "^16.0.3",
     "grammy": "^1.13.1",
+    "mysql2": "^3.1.2",
     "whois": "^2.14.0"
   }
 }
