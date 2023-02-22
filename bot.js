@@ -30,7 +30,7 @@ bot.command("help", async (ctx) => {
 // Messages
 
 bot.on("msg", async (ctx) => {
-  console.log("Query:", ctx.msg.text, "from", ctx.msg.id);
+  console.log("Query:", ctx.msg.text, "from", ctx.from.id);
   try {
     await whois.lookup(ctx.msg.text, async function (err, data) {
       if (err) {
