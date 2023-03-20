@@ -2,7 +2,11 @@
   "dependencies": {
     "dotenv": "^16.0.3",
     "grammy": "^1.13.1",
-    "mysql2": "^3.1.2",
     "whois": "^2.14.0"
+  },
+  "author": {
+    "name": "Zubin",
+    "email": "me@zubin.org.in",
+    "url": "https://zubin.org.in"
   }
 }
