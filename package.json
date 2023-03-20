@@ -10,6 +10,6 @@
     "url": "https://zubin.org.in"
   },
   "scripts": {
-    "main": "node bot.js"
+    "start": "node bot.js"
   }
 }
