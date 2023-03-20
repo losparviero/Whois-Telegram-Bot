@@ -8,5 +8,8 @@
     "name": "Zubin",
     "email": "me@zubin.org.in",
     "url": "https://zubin.org.in"
+  },
+  "scripts": {
+    "main": "node bot.js"
   }
 }
